@@ -10,9 +10,6 @@ import (
 	"github.com/go-webauthn/webauthn/metadata/providers/memory"
 )
 
-//go:embed blob.jwt
-var fidoMdsBytes []byte
-
 //go:embed metadata.jwt.gz
 var fidoCompressedBytes []byte
 
