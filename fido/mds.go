@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	_ "embed"
+	"io"
 
 	"github.com/go-webauthn/webauthn/metadata"
 
@@ -13,17 +14,25 @@ import (
 //go:embed metadata.jwt.gz
 var fidoCompressedBytes []byte
 
+func GetJWTReader() (io.Reader, error) {
+	embedReader := bytes.NewReader(fidoCompressedBytes)
+	return gzip.NewReader(embedReader)
+}
+
 func getBuiltIn() (*metadata.Metadata, error) {
 	//mdsReader := bytes.NewReader(fidoMdsBytes)
-	embedReader := bytes.NewReader(fidoCompressedBytes)
-	mdsReader, err := gzip.NewReader(embedReader)
+	//embedReader := bytes.NewReader(fidoCompressedBytes)
+	mdsReader, err := GetJWTReader()
 	if err != nil {
 		return nil, err
 	}
+
 	decoder, err := metadata.NewDecoder(metadata.WithIgnoreEntryParsingErrors())
 	if err != nil {
 		return nil, err
 	}
+	// Decode also does signature verification against the roots built in into
+	// the go-webathn library
 	payload, err := decoder.Decode(mdsReader)
 	if err != nil {
 		return nil, err
