@@ -20,21 +20,14 @@ func GetJWTReader() (io.Reader, error) {
 	return gzip.NewReader(embedReader)
 }
 
-func getBuiltIn() (*metadata.Metadata, error) {
-	//mdsReader := bytes.NewReader(fidoMdsBytes)
-	//embedReader := bytes.NewReader(fidoCompressedBytes)
-	mdsReader, err := GetJWTReader()
-	if err != nil {
-		return nil, err
-	}
-
+func getMetadataFromReader(inreader io.Reader) (*metadata.Metadata, error) {
 	decoder, err := metadata.NewDecoder(metadata.WithIgnoreEntryParsingErrors())
 	if err != nil {
 		return nil, err
 	}
 	// Decode also does signature verification against the roots built in into
 	// the go-webathn library
-	payload, err := decoder.Decode(mdsReader)
+	payload, err := decoder.Decode(inreader)
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +35,28 @@ func getBuiltIn() (*metadata.Metadata, error) {
 }
 
 func GetProvider() (provider metadata.Provider, err error) {
-	builtInMds, err := getBuiltIn()
+	jwtReader, err := GetJWTReader()
 	if err != nil {
 		return nil, err
 	}
+	return GetProviderFromMetadataReader(jwtReader)
+
+}
+
+// GetProviderFromMetadataReader takes a reader and creates
+// a provider to use. This actually validates the reader
+// contents against the mds signing roots
+// The reader is assumed to be a JWT blob with the official
+// fido mds structure
+func GetProviderFromMetadataReader(mdsReader io.Reader) (provider metadata.Provider, err error) {
+	readMDS, err := getMetadataFromReader(mdsReader)
+	if err != nil {
+		return nil, err
+	}
+
 	return memory.New(
-		memory.WithMetadata(builtInMds.ToMap()),
-		memory.WithMetadataKeyIdentifiers(builtInMds.ToKeyIdentifierMap()),
+		memory.WithMetadata(readMDS.ToMap()),
+		memory.WithMetadataKeyIdentifiers(readMDS.ToKeyIdentifierMap()),
 		memory.WithValidateEntryKeyIdentifier(true),
 	)
 
