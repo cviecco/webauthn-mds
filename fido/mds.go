@@ -14,6 +14,7 @@ import (
 //go:embed metadata.jwt.gz
 var fidoCompressedBytes []byte
 
+// GetJWTReader is an experimental interface do
 func GetJWTReader() (io.Reader, error) {
 	embedReader := bytes.NewReader(fidoCompressedBytes)
 	return gzip.NewReader(embedReader)
