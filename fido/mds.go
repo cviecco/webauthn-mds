@@ -11,7 +11,7 @@ import (
 	"github.com/go-webauthn/webauthn/metadata/providers/memory"
 )
 
-//go:embed metadata.jwt.gz
+//go:embed fidodata/metadata.jwt.gz
 var fidoCompressedBytes []byte
 
 // GetJWTReader is an experimental interface do
