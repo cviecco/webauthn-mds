@@ -48,3 +48,41 @@ func Reassemble(header string, cpayload []byte, signature string) (string, error
 	return header + "." + base64.RawURLEncoding.EncodeToString(payload) +
 		"." + signature, nil
 }
+
+type reassembleReader struct {
+	io.Reader
+	pr *io.PipeReader
+}
+
+// Close stops the goroutine encoding the payload, any pending write to
+// the pipe fails with io.ErrClosedPipe.
+func (r *reassembleReader) Close() error {
+	return r.pr.Close()
+}
+
+// ReassembleReader is the streaming version of Reassemble. The caller
+// must Close the returned reader to release the payload encoding goroutine.
+func ReassembleReader(header string, cpayload []byte, signature string) (io.ReadCloser, error) {
+	zr, err := gzip.NewReader(bytes.NewReader(cpayload))
+	if err != nil {
+		return nil, err
+	}
+	r1 := strings.NewReader(header)
+	r2 := strings.NewReader(".")
+	r4 := strings.NewReader(".")
+	r5 := strings.NewReader(signature)
+	pr, pw := io.Pipe()
+	go func() {
+		enc := base64.NewEncoder(base64.RawURLEncoding, pw)
+		_, err := io.Copy(enc, zr)
+		if err == nil {
+			err = enc.Close()
+		}
+		zr.Close()
+		pw.CloseWithError(err)
+	}()
+	return &reassembleReader{
+		Reader: io.MultiReader(r1, r2, pr, r4, r5),
+		pr:     pr,
+	}, nil
+}
