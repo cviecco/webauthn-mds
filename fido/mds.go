@@ -6,18 +6,37 @@ import (
 	_ "embed"
 	"io"
 
-	"github.com/go-webauthn/webauthn/metadata"
+	"github.com/cviecco/webauthn-mds/jwtlib"
 
+	"github.com/go-webauthn/webauthn/metadata"
 	"github.com/go-webauthn/webauthn/metadata/providers/memory"
 )
 
 //go:embed fidodata/metadata.jwt.gz
 var fidoCompressedBytes []byte
 
+//go:embed fidodata/mds.jwt.header
+var mdsHeaderString string
+
+//go:embed fidodata/mds.jwt.payload
+var mdsPayLoadBytes []byte
+
+//go:embed fidodata/mds.jwt.sig
+var mdsSignatureString string
+
 // GetJWTReader is an experimental interface do
-func GetJWTReader() (io.Reader, error) {
+func GetJWTReaderOld() (io.Reader, error) {
 	embedReader := bytes.NewReader(fidoCompressedBytes)
 	return gzip.NewReader(embedReader)
+}
+
+func GetJWTReader() (io.Reader, error) {
+	jwtString, err := jwtlib.Reassemble(mdsHeaderString, mdsPayLoadBytes, mdsSignatureString)
+	if err != nil {
+		return nil, err
+	}
+	jwtReader := bytes.NewReader([]byte(jwtString))
+	return jwtReader, nil
 }
 
 func getMetadataFromReader(inreader io.Reader) (*metadata.Metadata, error) {
