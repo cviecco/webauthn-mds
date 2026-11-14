@@ -2,7 +2,6 @@ package fido
 
 import (
 	"bytes"
-	"compress/gzip"
 	_ "embed"
 	"io"
 
@@ -11,9 +10,6 @@ import (
 	"github.com/go-webauthn/webauthn/metadata"
 	"github.com/go-webauthn/webauthn/metadata/providers/memory"
 )
-
-//go:embed fidodata/metadata.jwt.gz
-var fidoCompressedBytes []byte
 
 //go:embed fidodata/mds.jwt.header
 var mdsHeaderString string
@@ -24,11 +20,13 @@ var mdsPayLoadBytes []byte
 //go:embed fidodata/mds.jwt.sig
 var mdsSignatureString string
 
+/*
 // GetJWTReader is an experimental interface do
 func GetJWTReaderOld() (io.Reader, error) {
 	embedReader := bytes.NewReader(fidoCompressedBytes)
 	return gzip.NewReader(embedReader)
 }
+*/
 
 func GetJWTReader() (io.Reader, error) {
 	jwtString, err := jwtlib.Reassemble(mdsHeaderString, mdsPayLoadBytes, mdsSignatureString)

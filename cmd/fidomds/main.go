@@ -75,7 +75,7 @@ func (dms *DownLoadMDS) Run(ctx *CmdContext) error {
 		var err error
 		bodyBytes, err = getURLDataFromURL(client, targetURL)
 		if err != nil {
-			log.Printf("getURL failed %w", err)
+			log.Printf("getURL failed %s", err)
 			return err
 		}
 	case "waybackmachine":
