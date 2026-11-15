@@ -84,14 +84,6 @@ func (dms *DownLoadMDS) Run(ctx *CmdContext) error {
 		if err != nil {
 			return err
 		}
-		/*
-			snapshots, err := wayback.GetSnapshotData(targetURL, client) // the clint argument can also be nil
-			if err != nil {
-				log.Panic(err)
-			}
-			fmt.Printf("Snapshot data: %s\n", snapshots)
-			return fmt.Errorf("not implementee yet")
-		*/
 	default:
 		return fmt.Errorf("not implemented")
 	}
@@ -149,11 +141,29 @@ func generateFilesFromReader(jwtData io.Reader, outputPrefix string) error {
 	return nil
 }
 
+type GetBuiltInCmd struct {
+	OutFilename string `name:"outfile" default:"builtin-mds.jwt"`
+}
+
+func (gb *GetBuiltInCmd) Run(ctx *CmdContext) error {
+	jwtReader, err := fido.GetJWTReader()
+	if err != nil {
+		return err
+	}
+	dataBytes, err := io.ReadAll(jwtReader)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(gb.OutFilename, dataBytes, 0644)
+
+}
+
 var cli struct {
 	Debug bool `help:"Enable debug mode."`
 
 	Generate    GenerateFilesCmd `cmd:"" help:"Generate Files."`
 	Downloadmds DownLoadMDS      `cmd:"" help:"Download MDS "`
+	GetBuiltIn  GetBuiltInCmd    `cmd:"" help:"Dump built-in data into a file"`
 }
 
 func main() {
@@ -162,12 +172,4 @@ func main() {
 	err := ctx.Run(&CmdContext{Debug: cli.Debug})
 	ctx.FatalIfErrorf(err)
 
-	/*
-		//err := extractPrintHeader(os.Stdout)
-		//err := extractPrintJWTSection(2, os.Stdout)
-		err := GenerateFiles()
-		if err != nil {
-			panic(err)
-		}
-	*/
 }
