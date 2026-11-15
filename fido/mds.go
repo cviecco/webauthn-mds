@@ -20,14 +20,6 @@ var mdsPayLoadBytes []byte
 //go:embed fidodata/mds.jwt.sig
 var mdsSignatureString string
 
-/*
-// GetJWTReader is an experimental interface do
-func GetJWTReaderOld() (io.Reader, error) {
-	embedReader := bytes.NewReader(fidoCompressedBytes)
-	return gzip.NewReader(embedReader)
-}
-*/
-
 func GetJWTReader() (io.Reader, error) {
 	jwtString, err := jwtlib.Reassemble(mdsHeaderString, mdsPayLoadBytes, mdsSignatureString)
 	if err != nil {
